@@ -1,0 +1,184 @@
+{
+  "Uuid": "d72d3bb5-eb40-4bdc-b080-091815a227be",
+  "IsCustomNode": true,
+  "Category": "Custom",
+  "Description": "Calculates the total airflows from all Air Terminals in a Revit project.\r\n\r\nIndex 0 = Supply airflow total\r\nIndex 1 = Return airflow total\r\nIndex 2 = Exhaust airflow total ",
+  "Name": "Air Terminal Flow Totals",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "DSRevitNodesUI.Categories, DSRevitNodesUI",
+      "SelectedIndex": 5,
+      "NodeType": "ExtensionNode",
+      "Id": "fa4563fd4fea4da48eb61cc7c5f21bd8",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ed0390b2dbdf48ac9794210c43cc0718",
+          "Name": "Category",
+          "Description": "The selected Category.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "All built-in categories."
+    },
+    {
+      "ConcreteType": "DSRevitNodesUI.ElementsOfCategory, DSRevitNodesUI",
+      "NodeType": "ExtensionNode",
+      "Id": "55346d75169e46b68f38c732b71d4a99",
+      "Inputs": [
+        {
+          "Id": "43fc700a06b6480da4d983a4d4668142",
+          "Name": "Category",
+          "Description": "The Category",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "fe53acfdc6f6474294684449e6eed386",
+          "Name": "Elements",
+          "Description": "An element type.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Get all elements of the specified category from the model."
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "import clr\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nelements = IN[0]\r\n\r\ntotalSupply = 0\r\ntotalReturn = 0\r\ntotalExhaust = 0\r\n\r\nfor e in elements:\r\n\tsystem = e.GetParameterValueByName(\"System Classification\")\r\n\tairflow = e.GetParameterValueByName(\"Flow\")\r\n\t\r\n\tif system == \"Supply Air\":\r\n\t\ttotalSupply += airflow\r\n\t\r\n\tif system == \"Return Air\":\r\n\t\ttotalReturn += airflow\r\n\t\r\n\tif system == \"Exhaust Air\":\r\n\t\ttotalExhaust += airflow\r\n\r\ntotals = [totalSupply, totalReturn, totalExhaust]\r\n\r\nOUT = totals",
+      "VariableInputPorts": true,
+      "Id": "25632cfd95534655a7565e79304504e6",
+      "Inputs": [
+        {
+          "Id": "89b0d96f275e4478abbbf4472c4465d6",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "3fb5f4b772f24fb2bd156018462a5aab",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d70b082f05924a8a95ab42aaaba9d491",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e23a2bce78a74f9db4c7c2733f0102f7",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded IronPython script."
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "ed0390b2dbdf48ac9794210c43cc0718",
+      "End": "43fc700a06b6480da4d983a4d4668142",
+      "Id": "94afee8bbad64416af34e210a6b0a7cf"
+    },
+    {
+      "Start": "fe53acfdc6f6474294684449e6eed386",
+      "End": "89b0d96f275e4478abbbf4472c4465d6",
+      "Id": "cb62d3f1fa854268b7a5c4d5b0da85e6"
+    }
+  ],
+  "Dependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.0.3.8810",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "Id": "fa4563fd4fea4da48eb61cc7c5f21bd8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Categories",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 250.0,
+        "Y": 0.0
+      },
+      {
+        "Id": "55346d75169e46b68f38c732b71d4a99",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "All Elements of Category",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 447.854738724958,
+        "Y": 0.0
+      },
+      {
+        "Id": "25632cfd95534655a7565e79304504e6",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Name": "Python Script",
+        "ShowGeometry": true,
+        "Excluded": false,
+        "X": 662.673882503645,
+        "Y": 0.0
+      }
+    ],
+    "Annotations": [],
+    "X": -128.34200856357972,
+    "Y": 325.99902119013228,
+    "Zoom": 0.82269535937499993
+  }
+}
