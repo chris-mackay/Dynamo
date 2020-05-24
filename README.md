@@ -1,5 +1,5 @@
 # Dynamo
-A collection of Revit Dynamo scripts
+Revit Dynamo scripts
 
 ## Air Terminal Flow Totals
 
