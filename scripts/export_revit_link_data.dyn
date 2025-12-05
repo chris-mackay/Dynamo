@@ -1,0 +1,249 @@
+{
+  "Uuid": "4f6f68e4-b2fa-4f8b-a26f-4793b212d9bc",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "export_revit_link_data",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "CoreNodeModels.Input.FileObject, CoreNodeModels",
+      "Id": "b6519461867649a5b99b8d422c4d22f6",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "9e69f80bc2404a369f74e2b08449e04b",
+          "Name": "path",
+          "Description": "Path to the file.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "e62d0cd6d3a7405097b5a24452960cf4",
+          "Name": "file",
+          "Description": "File object",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a file object from the given path"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonStringNode, PythonNodeModels",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "c23c3d22adc54f77a6427ac98b8e7011",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "3d7dc81bd5f44cb9b64b5764d8593508",
+          "Name": "script",
+          "Description": "Python script to run.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "a16caecfa89c4565802886855f98b525",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "c3daa08c721945369d9d434754a9f436",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs a Python script from a string."
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
+      "Id": "0f6623bd1ac2472d859aebb6fed4f7f5",
+      "NodeType": "FunctionNode",
+      "Inputs": [
+        {
+          "Id": "dc2a68cf532940c5b6c69f741f622b6e",
+          "Name": "file",
+          "Description": "File object to read text from\n\nvar",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "3b6a8a8775b247bdaefc3c5f672d2ca8",
+          "Name": "string",
+          "Description": "Contents of the text file.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "FunctionSignature": "DSCore.IO.FileSystem.ReadText@var",
+      "Replication": "Auto",
+      "Description": "Reads a text file and returns the contents as a string.\n\nFileSystem.ReadText (file: var): string"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.Filename, CoreNodeModels",
+      "Id": "da62df97bbc24d7b8a33247b5a1f133d",
+      "NodeType": "ExtensionNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "a7ebbec0cd0e4a7f9c0a5f44de167fb6",
+          "Name": "",
+          "Description": "File Path",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Allows you to select a file on the system and returns its file path",
+      "HintPath": "P:\\PPR_Proj\\2024\\D24PA044\\05 Design\\14 Drawings\\01 WIP\\13 BIM Mgr\\Clarity\\Scripts\\export_revit_link_data.py",
+      "InputValue": ".\\export_revit_link_data.py"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "e62d0cd6d3a7405097b5a24452960cf4",
+      "End": "dc2a68cf532940c5b6c69f741f622b6e",
+      "Id": "b248ddf7deb040ab918967065379267b",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "3b6a8a8775b247bdaefc3c5f672d2ca8",
+      "End": "3d7dc81bd5f44cb9b64b5764d8593508",
+      "Id": "82d15be586e24384ad9291dc8ca14d22",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "a7ebbec0cd0e4a7f9c0a5f44de167fb6",
+      "End": "9e69f80bc2404a369f74e2b08449e04b",
+      "Id": "3520e8aaeea7418781bc0f8dd16b8c65",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "2.19",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "6.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "b6519461867649a5b99b8d422c4d22f6",
+        "Name": "File From Path",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 374.88643364993925,
+        "Y": 7.4372716742007583
+      },
+      {
+        "Id": "c23c3d22adc54f77a6427ac98b8e7011",
+        "Name": "Python Script From String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 954.67344569435136,
+        "Y": 178.25230013651844
+      },
+      {
+        "Id": "0f6623bd1ac2472d859aebb6fed4f7f5",
+        "Name": "FileSystem.ReadText",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 631.22282204659882,
+        "Y": 70.303107405284152
+      },
+      {
+        "Id": "da62df97bbc24d7b8a33247b5a1f133d",
+        "Name": "File Path",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 58.863024499831113,
+        "Y": -1.9201676690591967
+      }
+    ],
+    "Annotations": [],
+    "X": 192.61214744846228,
+    "Y": 179.25196374047493,
+    "Zoom": 0.852765925581498
+  }
+}
