@@ -1,0 +1,629 @@
+{
+  "Uuid": "61cfe839-f8ca-42cc-bbcc-9c7597d63ca8",
+  "IsCustomNode": false,
+  "Description": "",
+  "Name": "load_families_insert_parameters",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "# Load the Python Standard and DesignScript Libraries\r\nimport sys\r\nimport clr\r\nclr.AddReference('ProtoGeometry')\r\nfrom Autodesk.DesignScript.Geometry import *\r\n\r\nclr.AddReference(\"RevitServices\")\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.ApplicationServices import *\r\n\r\nunc_paths_families = IN[0]\r\nunc_path_spfile = IN[1]\r\nguids = IN[2]\r\ncategories = IN[3]\r\n\r\ndef get_shared_parameter_by_guid(app, guid):\r\n    # Loop through shared parameter file, return Definition that matches GUID\r\n    sp_file = app.OpenSharedParameterFile()\r\n    if sp_file is None:\r\n        return None\r\n    for group in sp_file.Groups:\r\n        for definition in group.Definitions:\r\n            ext_def = definition\r\n            if hasattr(ext_def, \"GUID\") and str(ext_def.GUID).upper() == guid.upper():\r\n                return ext_def\r\n    return None\r\n\r\ndef bind_shared_parameter(doc, definition, categories):\r\n    \r\n    for cat in categories:\r\n        cat = doc.Settings.Categories.get_Item(cat.Name)\r\n        cats = app.Create.NewCategorySet()\r\n        cats.Insert(cat)\r\n        ib = app.Create.NewInstanceBinding(cats)\r\n    \r\n    binding_map = doc.ParameterBindings\r\n\r\n    if not binding_map.Contains(definition):\r\n        if revit_version < 2025:\r\n            group = BuiltInParameterGroup.PG_DATA\r\n            result = binding_map.Insert(definition, ib, group)\r\n        else:  # Revit 2025+\r\n            group = ForgeTypeId(GroupTypeId.Data)\r\n            result = binding_map.Insert(definition, ib, group)\r\n        return \"Inserted: \" + definition.Name if result else \"Failed to insert: \" + definition.Name\r\n    else:\r\n        return \"Already exists: \" + definition.Name\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\napp = doc.Application\r\nrevit_version = int(app.VersionNumber)  # e.g., 2020, 2021, 2022, etc.\r\n\r\ntrans = Transaction(doc, \"Load family and parameters\")\r\n\r\ntrans.Start()\r\n\r\n# Load titleblock family from file\r\nfor unc_path_family in unc_paths_families:\r\n    doc.LoadFamily(unc_path_family)\r\n\r\n# Set shared parameter file\r\napp.SharedParametersFilename = unc_path_spfile\r\n\r\nresults = []\r\nfor guid in guids:\r\n    definition = get_shared_parameter_by_guid(app, guid)\r\n    if definition:\r\n        result = bind_shared_parameter(doc, definition, categories)\r\n        results.append(result)\r\n    else:\r\n        results.append(\"Not found in Shared Parameters: \" + guid)\r\nOUT = results\r\n\r\ntrans.Commit()\r\n\r\ntransOptions = TransactWithCentralOptions()\r\nsyncOptions = SynchronizeWithCentralOptions()\r\nrelinquishOptions = RelinquishOptions(None)\r\n\r\nsyncOptions.SetRelinquishOptions(relinquishOptions)\r\n\r\nsyncOptions.SaveLocalBefore = True\r\nsyncOptions.SaveLocalAfter = True\r\n\r\ndoc.SynchronizeWithCentral(transOptions, syncOptions)\r\n\r\n",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "ef2bc05091ac494a9ee6915d5fac552c",
+      "NodeType": "PythonScriptNode",
+      "Inputs": [
+        {
+          "Id": "43176f1d38b34810aae053047b97fd01",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "43d721b1026e47019e8603abc755c0d6",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "b66621ebb25f458e901e05ccb7de4e27",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "331298269ba240d2906511d7ad719e73",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "4546cb97a8bd4a78bcb9518b988d9017",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "a2ee4deaddbd40c9be910264948cfe1a",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "976ae19aff624b179040414dc1c46f7c",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "\\\\arcadis-nl.local\\dfs\\ADPS_PJ\\Philadelphia\\PPR_Proj\\2024\\D24PA044\\05 Design\\14 Drawings\\01 WIP\\13 BIM Mgr\\Clarity\\Scripts\\Test\\D24PA044-ELY-Title-BH.rfa"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "300cf86dccbf40bf872eec190dbf662c",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "ee1430b2f917430f8492d02323d21fbf",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "\\\\arcadis-nl.local\\dfs\\ADPS_PJ\\Philadelphia\\PPR_Proj\\2024\\D24PA044\\05 Design\\14 Drawings\\01 WIP\\13 BIM Mgr\\Clarity\\Scripts\\Test\\D24PA044-ARC-Shared Parameters-Sheets.txt"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "Id": "ba3c5158a13f4a0392fd95dbd0bdf024",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "0443d05964994a12bb75728d30924a7d",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "8bdd8376345547e89b2bc1edc0118a70",
+          "Name": "item1",
+          "Description": "Item Index #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d72440c22f724d22b0d695fa3a47597e",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "ddf59188ced948e5afd7a00d16c535d9",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "48b405ffacf04e529e954e06ce5caa5e",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "7d7edc48-1da7-4e26-b672-fe06e3f352b1"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "12c64d98df8d4df5b9909e10bedec4c5",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "369ef25d026c4160afd0880540e267b7",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "3867209d-74ef-4c7a-9386-875e6ae31ee9"
+    },
+    {
+      "ConcreteType": "DSRevitNodesUI.Categories, DSRevitNodesUI",
+      "SelectedIndex": 527,
+      "SelectedString": "OST_Sheets",
+      "Id": "4a1e02092d194d77a16c99aa71ad961d",
+      "NodeType": "ExtensionNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "bd87305392934e6da471edd41a5775d3",
+          "Name": "Category",
+          "Description": "The selected Category.",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "All built-in categories."
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "Id": "e901b5975d7945c1bbe1e723f0df34ef",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "9306992ab7b94d3dbd645e5964121fe7",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "d3592dcde46542d0aa1220c5564635f3",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.CreateList, CoreNodeModels",
+      "VariableInputPorts": true,
+      "Id": "343c93dea2e54b21b400f614e37c6ba3",
+      "NodeType": "ExtensionNode",
+      "Inputs": [
+        {
+          "Id": "cfd54dd96b764c9cbd5b4061d88c2438",
+          "Name": "item0",
+          "Description": "Item Index #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "0156b7e5dc434514978e23846fe0f263",
+          "Name": "item1",
+          "Description": "Item Index #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "af15963ac81e4a089679826848127e48",
+          "Name": "list",
+          "Description": "A list (type: var[]..[])",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Makes a new list from the given inputs"
+    },
+    {
+      "ConcreteType": "CoreNodeModels.Input.StringInput, CoreNodeModels",
+      "Id": "a57b9a50607742cb88b0919dbdfb8553",
+      "NodeType": "StringInputNode",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "5b4db0b1f67f468d810d2082fb4d4f34",
+          "Name": "",
+          "Description": "String",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Creates a string",
+      "InputValue": "\\\\arcadis-nl.local\\dfs\\ADPS_PJ\\Philadelphia\\PPR_Proj\\2024\\D24PA044\\05 Design\\14 Drawings\\01 WIP\\13 BIM Mgr\\Clarity\\Scripts\\Test\\D24PA044-ELY-Title-E1-Sketch.rfa"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "976ae19aff624b179040414dc1c46f7c",
+      "End": "cfd54dd96b764c9cbd5b4061d88c2438",
+      "Id": "c2e0ab92f60b4a3e935618d7b7b91695",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "ee1430b2f917430f8492d02323d21fbf",
+      "End": "43d721b1026e47019e8603abc755c0d6",
+      "Id": "0c770367f92947c4b2ceba5e4495beb6",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d72440c22f724d22b0d695fa3a47597e",
+      "End": "b66621ebb25f458e901e05ccb7de4e27",
+      "Id": "cf082d120bc4480a90fac6705a020c13",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "48b405ffacf04e529e954e06ce5caa5e",
+      "End": "0443d05964994a12bb75728d30924a7d",
+      "Id": "29c063c5c162424f995f6386bd13dd06",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "369ef25d026c4160afd0880540e267b7",
+      "End": "8bdd8376345547e89b2bc1edc0118a70",
+      "Id": "535f1cbd5ade48f3b42de6331b95b8eb",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "bd87305392934e6da471edd41a5775d3",
+      "End": "9306992ab7b94d3dbd645e5964121fe7",
+      "Id": "94fb7d8114a3467492ae855b62d0e6fc",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "d3592dcde46542d0aa1220c5564635f3",
+      "End": "331298269ba240d2906511d7ad719e73",
+      "Id": "ef6c9e07987a4d9b9b1cceb0bcc0f3f4",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "af15963ac81e4a089679826848127e48",
+      "End": "43176f1d38b34810aae053047b97fd01",
+      "Id": "2e6092839d4b4e2a8d59779e11b4294e",
+      "IsHidden": "False"
+    },
+    {
+      "Start": "5b4db0b1f67f468d810d2082fb4d4f34",
+      "End": "0156b7e5dc434514978e23846fe0f263",
+      "Id": "06e9342cf4a443b19ce75bead28b4f33",
+      "IsHidden": "False"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "D24PA044-ELY-Title-BH.rfa",
+      "ReferenceType": "External",
+      "Nodes": [
+        "a2ee4deaddbd40c9be910264948cfe1a"
+      ]
+    },
+    {
+      "Name": "D24PA044-ARC-Shared Parameters-Sheets.txt",
+      "ReferenceType": "External",
+      "Nodes": [
+        "300cf86dccbf40bf872eec190dbf662c"
+      ]
+    },
+    {
+      "Name": "D24PA044-ELY-Title-E1-Sketch.rfa",
+      "ReferenceType": "External",
+      "Nodes": [
+        "a57b9a50607742cb88b0919dbdfb8553"
+      ]
+    }
+  ],
+  "Thumbnail": "",
+  "GraphDocumentationURL": null,
+  "ExtensionWorkspaceData": [
+    {
+      "ExtensionGuid": "28992e1d-abb9-417f-8b1b-05e053bee670",
+      "Name": "Properties",
+      "Version": "3.6",
+      "Data": {}
+    },
+    {
+      "ExtensionGuid": "DFBD9CC0-DB40-457A-939E-8C8555555A9D",
+      "Name": "Generative Design",
+      "Version": "9.1",
+      "Data": {}
+    }
+  ],
+  "Author": "",
+  "Linting": {
+    "activeLinter": "None",
+    "activeLinterId": "7b75fb44-43fd-4631-a878-29f4d5d8399a",
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": true,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.19.3.6394",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "_Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "ConnectorPins": [],
+    "NodeViews": [
+      {
+        "Id": "ef2bc05091ac494a9ee6915d5fac552c",
+        "Name": "Python Script",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": 460.53069038240051,
+        "Y": 941.47474025280349
+      },
+      {
+        "Id": "a2ee4deaddbd40c9be910264948cfe1a",
+        "Name": "UNC path of family to load",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -986.78690927773289,
+        "Y": -71.348346338845857
+      },
+      {
+        "Id": "300cf86dccbf40bf872eec190dbf662c",
+        "Name": "UNC path of shared parameter file",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -988.98420449777529,
+        "Y": 645.39671136467155
+      },
+      {
+        "Id": "ba3c5158a13f4a0392fd95dbd0bdf024",
+        "Name": "List of shared parameter guids to load",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -638.4841462169228,
+        "Y": 1087.7324600747791
+      },
+      {
+        "Id": "ddf59188ced948e5afd7a00d16c535d9",
+        "Name": "String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -981.81123282915883,
+        "Y": 1053.8857504384691
+      },
+      {
+        "Id": "12c64d98df8d4df5b9909e10bedec4c5",
+        "Name": "String",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -993.82969757937281,
+        "Y": 1209.8001110743091
+      },
+      {
+        "Id": "4a1e02092d194d77a16c99aa71ad961d",
+        "Name": "Categories",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -996.490123069138,
+        "Y": 1550.77129010222
+      },
+      {
+        "Id": "e901b5975d7945c1bbe1e723f0df34ef",
+        "Name": "List of categories to bind to",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -537.030454628326,
+        "Y": 1455.14422574578
+      },
+      {
+        "Id": "343c93dea2e54b21b400f614e37c6ba3",
+        "Name": "List Create",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -522.4974628424161,
+        "Y": 52.530931600865529
+      },
+      {
+        "Id": "a57b9a50607742cb88b0919dbdfb8553",
+        "Name": "UNC path of family to load",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "ShowGeometry": true,
+        "X": -988.91298866196894,
+        "Y": 207.35037072779079
+      }
+    ],
+    "Annotations": [
+      {
+        "Id": "a8f867422fcb493089d6780f3b5b289e",
+        "Title": "Shared parameter file",
+        "DescriptionText": "Provide full UNC paths. Must be a server path that Clarity has access to.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "300cf86dccbf40bf872eec190dbf662c"
+        ],
+        "HasNestedGroups": false,
+        "Left": -998.98420449777529,
+        "Top": 520.39671136467155,
+        "Width": 348.0,
+        "Height": 433.0,
+        "FontSize": 36.0,
+        "GroupStyleId": "883066aa-1fe2-44a4-9bd1-c3df86bfe9f6",
+        "InitialTop": 645.39671136467155,
+        "InitialHeight": 436.462441540237,
+        "TextblockHeight": 115.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "5e2cd6315a70412f96c9685d6bcfbad6",
+        "Title": "GUID's of the shared parameters",
+        "DescriptionText": "Open the shared parameter file in excel and copy/paste to here. Add parameters as needed, but they must be from the specified shared parameter file above. Add more as needed.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "ddf59188ced948e5afd7a00d16c535d9",
+          "12c64d98df8d4df5b9909e10bedec4c5",
+          "ba3c5158a13f4a0392fd95dbd0bdf024"
+        ],
+        "HasNestedGroups": false,
+        "Left": -1003.8296975793728,
+        "Top": 971.88575043846913,
+        "Width": 734.34555136245,
+        "Height": 388.91436063584,
+        "FontSize": 36.0,
+        "GroupStyleId": "883066aa-1fe2-44a4-9bd1-c3df86bfe9f6",
+        "InitialTop": 1053.8857504384691,
+        "InitialHeight": 300.914360635832,
+        "TextblockHeight": 72.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "4878fab4585a4285aa61c484a30eb940",
+        "Title": "Categories to bind parameters to",
+        "DescriptionText": "Add more as needed",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "4a1e02092d194d77a16c99aa71ad961d",
+          "e901b5975d7945c1bbe1e723f0df34ef"
+        ],
+        "HasNestedGroups": false,
+        "Left": -1006.490123069138,
+        "Top": 1382.14422574578,
+        "Width": 758.459668440812,
+        "Height": 300.62706435644009,
+        "FontSize": 36.0,
+        "GroupStyleId": "883066aa-1fe2-44a4-9bd1-c3df86bfe9f6",
+        "InitialTop": 1455.14422574578,
+        "InitialHeight": 240.627064356439,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFB8D8"
+      },
+      {
+        "Id": "7020c4af8fb94a9b8224688b6fecfed8",
+        "Title": "Families to load",
+        "DescriptionText": "Provide full UNC paths. Must be a server path that Clarity has access to.",
+        "IsExpanded": true,
+        "WidthAdjustment": 0.0,
+        "HeightAdjustment": 0.0,
+        "Nodes": [
+          "a2ee4deaddbd40c9be910264948cfe1a",
+          "343c93dea2e54b21b400f614e37c6ba3",
+          "a57b9a50607742cb88b0919dbdfb8553"
+        ],
+        "HasNestedGroups": false,
+        "Left": -998.91298866196894,
+        "Top": -144.34834633884586,
+        "Width": 646.41552581955284,
+        "Height": 636.69871706663662,
+        "FontSize": 36.0,
+        "GroupStyleId": "883066aa-1fe2-44a4-9bd1-c3df86bfe9f6",
+        "InitialTop": -71.348346338845857,
+        "InitialHeight": 593.69871706663662,
+        "TextblockHeight": 63.0,
+        "Background": "#FFFFB8D8"
+      }
+    ],
+    "X": 833.42798139695867,
+    "Y": 166.12003588311268,
+    "Zoom": 0.39567946809528287
+  }
+}

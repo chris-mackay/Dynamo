@@ -1,5 +1,5 @@
 {
-  "Uuid": "4f6f68e4-b2fa-4f8b-a26f-4793b212d9bc",
+  "Uuid": "2a227aaf-0e63-44fc-915d-0d4e85e40de5",
   "IsCustomNode": false,
   "Description": "",
   "Name": "export_revit_link_data",
@@ -10,53 +10,15 @@
   "Outputs": [],
   "Nodes": [
     {
-      "ConcreteType": "CoreNodeModels.Input.FileObject, CoreNodeModels",
-      "Id": "b6519461867649a5b99b8d422c4d22f6",
-      "NodeType": "ExtensionNode",
-      "Inputs": [
-        {
-          "Id": "9e69f80bc2404a369f74e2b08449e04b",
-          "Name": "path",
-          "Description": "Path to the file.",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        }
-      ],
-      "Outputs": [
-        {
-          "Id": "e62d0cd6d3a7405097b5a24452960cf4",
-          "Name": "file",
-          "Description": "File object",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        }
-      ],
-      "Replication": "Disabled",
-      "Description": "Creates a file object from the given path"
-    },
-    {
-      "ConcreteType": "PythonNodeModels.PythonStringNode, PythonNodeModels",
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "Code": "import clr\r\nimport csv\r\nimport math\r\nimport os\r\nimport sys\r\nfrom pathlib import Path\r\nfrom datetime import datetime\r\n\r\nclr.AddReference(\"RevitServices\")\r\nfrom RevitServices.Persistence import DocumentManager\r\n\r\nclr.AddReference(\"RevitAPI\")\r\nfrom Autodesk.Revit.DB import *\r\n\r\ndef delete_if_not_modified_today(file_path):\r\n    p = Path(file_path)\r\n    if not p.exists():\r\n        print(f\"File not found: {p}\")\r\n        return\r\n    if not p.is_file():\r\n        print(f\"Not a file: {p}\")\r\n        return\r\n\r\n    mod_date = datetime.fromtimestamp(p.stat().st_mtime).date()\r\n    today = datetime.now().date()\r\n\r\n    if mod_date != today:\r\n        try:\r\n            p.unlink()\r\n            print(f\"Deleted: {p} (modified: {mod_date})\")\r\n        except Exception as e:\r\n            print(f\"Error deleting {p}: {e}\")\r\n    else:\r\n        print(f\"Kept: {p} (modified: {mod_date})\")\r\n\r\ndef get_link_base_point(link_instance, link_transform):\r\n    link_doc = link_instance.GetLinkDocument()\r\n    if link_doc is not None:\r\n        collector = FilteredElementCollector(link_doc).OfClass(BasePoint)\r\n        for base_point in collector:\r\n            if not base_point.IsShared:\r\n                link_base_point_in_link = base_point.Position\r\n                link_base_point_in_host = link_transform.OfPoint(link_base_point_in_link)\r\n                return link_base_point_in_host\r\n    return None\r\n\r\ndef get_host_base_point(doc):\r\n    collector = FilteredElementCollector(doc).OfClass(BasePoint)\r\n    \r\n    for base_point in collector:\r\n        if not base_point.IsShared:\r\n            return base_point.Position\r\n    \r\n    return None\r\n\r\nfile_path = IN[0]\r\n\r\ndelete_if_not_modified_today(file_path)\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\n\r\ncollector = FilteredElementCollector(doc).OfClass(RevitLinkInstance)\r\nlink_instances = list(collector)\r\nnon_nested_link_instances = []\r\n\r\nfor link in link_instances:\r\n    type_id = link.GetTypeId()\r\n    element = doc.GetElement(type_id)\r\n\r\n    if isinstance(element, RevitLinkType):\r\n        revit_link_type = element\r\n\r\n    if not revit_link_type.IsNestedLink:\r\n        non_nested_link_instances.append(link)\r\n\r\nproject_location = doc.ActiveProjectLocation\r\nproject_position = project_location.GetProjectPosition(XYZ(0,0,0))\r\n\r\nheader = [\"Document Title\", \"Link Name\", \"Workset Name\", \"Pinned\", \"Host XYZ\", \"Link XYZ\", \"Date\"]\r\ndata_rows = []\r\n\r\nfor link_inst in non_nested_link_instances:\r\n    try:\r\n        link_name = link_inst.Name\r\n    except:\r\n        link_name = \"Unknown\"\r\n    \r\n    pinned = link_inst.Pinned\r\n\r\n    ws_id = link_inst.WorksetId\r\n    ws = doc.GetWorksetTable().GetWorkset(ws_id)\r\n    ws_name = ws.Name if ws else \"None\"\r\n    \r\n    transform = link_inst.GetTransform()\r\n    host_base_point = get_host_base_point(doc)\r\n    link_base_point = get_link_base_point(link_inst, transform)\r\n\r\n    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')\r\n\r\n    data_rows.append([doc.Title, link_name, ws_name, pinned, host_base_point, link_base_point, date])\r\n\r\ntry:\r\n    file_exists = os.path.isfile(file_path)\r\n    with open(file_path, \"a\", newline='', encoding='utf-8') as csvfile:\r\n        writer = csv.writer(csvfile)\r\n        if not file_exists:\r\n            writer.writerow(header)\r\n        for row in data_rows:\r\n            writer.writerow(row)\r\n    result = \"CSV appended to: \" + file_path\r\nexcept Exception as e:\r\n    result = \"Error: \" + str(e)\r\n\r\nOUT = result",
       "Engine": "CPython3",
-      "EngineName": "CPython3",
       "VariableInputPorts": true,
-      "Id": "c23c3d22adc54f77a6427ac98b8e7011",
-      "NodeType": "ExtensionNode",
+      "Id": "a1eec5385f6e415dbaa93d22becc9ca5",
+      "NodeType": "PythonScriptNode",
       "Inputs": [
         {
-          "Id": "3d7dc81bd5f44cb9b64b5764d8593508",
-          "Name": "script",
-          "Description": "Python script to run.",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        },
-        {
-          "Id": "a16caecfa89c4565802886855f98b525",
+          "Id": "81df76177728457f9272bb6640642f15",
           "Name": "IN[0]",
           "Description": "Input #0",
           "UsingDefaultValue": false,
@@ -67,7 +29,7 @@
       ],
       "Outputs": [
         {
-          "Id": "c3daa08c721945369d9d434754a9f436",
+          "Id": "3369aba44a61497f9db78b628cad10a4",
           "Name": "OUT",
           "Description": "Result of the python script",
           "UsingDefaultValue": false,
@@ -77,46 +39,16 @@
         }
       ],
       "Replication": "Disabled",
-      "Description": "Runs a Python script from a string."
-    },
-    {
-      "ConcreteType": "Dynamo.Graph.Nodes.ZeroTouch.DSFunction, DynamoCore",
-      "Id": "0f6623bd1ac2472d859aebb6fed4f7f5",
-      "NodeType": "FunctionNode",
-      "Inputs": [
-        {
-          "Id": "dc2a68cf532940c5b6c69f741f622b6e",
-          "Name": "file",
-          "Description": "File object to read text from\n\nvar",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        }
-      ],
-      "Outputs": [
-        {
-          "Id": "3b6a8a8775b247bdaefc3c5f672d2ca8",
-          "Name": "string",
-          "Description": "Contents of the text file.",
-          "UsingDefaultValue": false,
-          "Level": 2,
-          "UseLevels": false,
-          "KeepListStructure": false
-        }
-      ],
-      "FunctionSignature": "DSCore.IO.FileSystem.ReadText@var",
-      "Replication": "Auto",
-      "Description": "Reads a text file and returns the contents as a string.\n\nFileSystem.ReadText (file: var): string"
+      "Description": "Runs an embedded Python script."
     },
     {
       "ConcreteType": "CoreNodeModels.Input.Filename, CoreNodeModels",
-      "Id": "da62df97bbc24d7b8a33247b5a1f133d",
+      "Id": "d7b7dc2234df4d99ae5d0133985979a2",
       "NodeType": "ExtensionNode",
       "Inputs": [],
       "Outputs": [
         {
-          "Id": "a7ebbec0cd0e4a7f9c0a5f44de167fb6",
+          "Id": "774ed74a46a84fa3add4975802ed85a6",
           "Name": "",
           "Description": "File Path",
           "UsingDefaultValue": false,
@@ -127,32 +59,29 @@
       ],
       "Replication": "Disabled",
       "Description": "Allows you to select a file on the system and returns its file path",
-      "HintPath": "P:\\PPR_Proj\\2024\\D24PA044\\05 Design\\14 Drawings\\01 WIP\\13 BIM Mgr\\Clarity\\Scripts\\export_revit_link_data.py",
-      "InputValue": ".\\export_revit_link_data.py"
+      "HintPath": ".\\revit_link_data.csv",
+      "InputValue": ".\\revit_link_data.csv"
     }
   ],
   "Connectors": [
     {
-      "Start": "e62d0cd6d3a7405097b5a24452960cf4",
-      "End": "dc2a68cf532940c5b6c69f741f622b6e",
-      "Id": "b248ddf7deb040ab918967065379267b",
-      "IsHidden": "False"
-    },
-    {
-      "Start": "3b6a8a8775b247bdaefc3c5f672d2ca8",
-      "End": "3d7dc81bd5f44cb9b64b5764d8593508",
-      "Id": "82d15be586e24384ad9291dc8ca14d22",
-      "IsHidden": "False"
-    },
-    {
-      "Start": "a7ebbec0cd0e4a7f9c0a5f44de167fb6",
-      "End": "9e69f80bc2404a369f74e2b08449e04b",
-      "Id": "3520e8aaeea7418781bc0f8dd16b8c65",
+      "Start": "774ed74a46a84fa3add4975802ed85a6",
+      "End": "81df76177728457f9272bb6640642f15",
+      "Id": "504f58a910604e3c829836c636d0dfd3",
       "IsHidden": "False"
     }
   ],
   "Dependencies": [],
-  "NodeLibraryDependencies": [],
+  "NodeLibraryDependencies": [
+    {
+      "Name": "revit_link_data.csv",
+      "ReferenceType": "External",
+      "Nodes": [
+        "d7b7dc2234df4d99ae5d0133985979a2"
+      ]
+    }
+  ],
+  "EnableLegacyPolyCurveBehavior": true,
   "Thumbnail": "",
   "GraphDocumentationURL": null,
   "ExtensionWorkspaceData": [
@@ -182,8 +111,8 @@
       "ScaleFactor": 1.0,
       "HasRunWithoutCrash": true,
       "IsVisibleInDynamoLibrary": true,
-      "Version": "2.19.3.6394",
-      "RunType": "Manual",
+      "Version": "3.6.1.9895",
+      "RunType": "Automatic",
       "RunPeriod": "1000"
     },
     "Camera": {
@@ -201,49 +130,29 @@
     "ConnectorPins": [],
     "NodeViews": [
       {
-        "Id": "b6519461867649a5b99b8d422c4d22f6",
-        "Name": "File From Path",
+        "Id": "a1eec5385f6e415dbaa93d22becc9ca5",
+        "Name": "Python Script",
         "IsSetAsInput": false,
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": 374.88643364993925,
-        "Y": 7.4372716742007583
+        "X": 722.0,
+        "Y": 266.0
       },
       {
-        "Id": "c23c3d22adc54f77a6427ac98b8e7011",
-        "Name": "Python Script From String",
-        "IsSetAsInput": false,
-        "IsSetAsOutput": false,
-        "Excluded": false,
-        "ShowGeometry": true,
-        "X": 954.67344569435136,
-        "Y": 178.25230013651844
-      },
-      {
-        "Id": "0f6623bd1ac2472d859aebb6fed4f7f5",
-        "Name": "FileSystem.ReadText",
-        "IsSetAsInput": false,
-        "IsSetAsOutput": false,
-        "Excluded": false,
-        "ShowGeometry": true,
-        "X": 631.22282204659882,
-        "Y": 70.303107405284152
-      },
-      {
-        "Id": "da62df97bbc24d7b8a33247b5a1f133d",
+        "Id": "d7b7dc2234df4d99ae5d0133985979a2",
         "Name": "File Path",
         "IsSetAsInput": false,
         "IsSetAsOutput": false,
         "Excluded": false,
         "ShowGeometry": true,
-        "X": 58.863024499831113,
-        "Y": -1.9201676690591967
+        "X": 480.0,
+        "Y": 266.0
       }
     ],
     "Annotations": [],
-    "X": 192.61214744846228,
-    "Y": 179.25196374047493,
-    "Zoom": 0.852765925581498
+    "X": -59.0,
+    "Y": 13.0,
+    "Zoom": 1.0
   }
 }
